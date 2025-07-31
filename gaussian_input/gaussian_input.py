@@ -16,7 +16,7 @@ atom_xyz
 '''
 import numpy as np
 import os
-from input_keys import required_input, optional_input, system_control
+from .input_keys import required_input, optional_input, system_control
 
 class GaussianInput:
     def __init__(self):
@@ -25,13 +25,13 @@ class GaussianInput:
         # set default value for chkpath to the chkpoint file
         # where the script is running
         self._system_controls['chk'] = 'my_calculation.chk'
-        self._input_parameters['method'] = 'hf'
-        self._input_parameters['basis'] = 'sto-3g'
-        self._input_parameters['charge'] = 0
-        self._input_parameters['multiplicity'] = 1
+        self._input_parameters['method'] = None
+        self._input_parameters['basis'] = None
+        self._input_parameters['charge'] = None
+        self._input_parameters['multiplicity'] = None
         self._input_parameters['title'] = 'Gaussian Calculation'
-        self._input_parameters['atoms'] = np.array([])
-        self._input_parameters['coordinates'] = np.array([])
+        self._input_parameters['atoms'] = None
+        self._input_parameters['coordinates'] = None
         self._input_parameters['optimization'] = None
         self._input_parameters['stable'] = None
         self._input_parameters['print_level'] = 'N'  # default print level
@@ -45,7 +45,17 @@ class GaussianInput:
                 raise KeyError(f"Invalid input parameter: {key}")
         else:
             raise KeyError(f"Invalid input parameter: {key}. Must be one of {required_input + optional_input}.")
-        
+    
+    def are_all_required_parameters_set(self):
+        """Check if all required parameters are set."""
+        assert isinstance(self._input_parameters, dict), "Input parameters must be a dictionary."
+        all_required_parameters_set = True
+        for key in required_input:
+            if key not in self._input_parameters or self._input_parameters[key] is None:
+                print(f"Required input parameter '{key}' is not set.")
+                all_required_parameters_set = False       
+        return all_required_parameters_set
+
     def set_atoms(self, atoms):
         """Set the atoms for the Gaussian calculation."""
         if isinstance(atoms, (list, np.ndarray)):
@@ -176,13 +186,15 @@ class GaussianInput:
         print("\nSystem Control Parameters:")
         for key, value in self._system_controls.items():
             print(f"{key}: {value}")
+        _ = self.are_all_required_parameters_set()
 
     def save_gaussian_input_file(self, filename):
         """ Save the Gaussian input parameters to a file.
             if filename exists, rename filename to filename.bak_date,
             and show a warning to the user.
         """
-
+        assert isinstance(filename, str), "Filename must be a string."
+        assert self.are_all_required_parameters_set(), "Not all required parameters are set."
         assert len(self._input_parameters['atoms']) > 0, "No atoms specified in the input parameters."
         assert len(self._input_parameters['coordinates']) > 0, "No coordinates specified in the input parameters."
         assert len(self._input_parameters['atoms']) == len(self._input_parameters['coordinates']), \

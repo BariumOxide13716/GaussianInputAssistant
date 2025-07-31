@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gaussian_input"
+version = "0.1.0"
+description = "A tool for reading, modifying and writing Gaussian input files."
+authors = [
+    { name="Jie J. Bao", email="baoxx138@umn.edu" }
+]
+readme = "README.md"
+requires-python = ">=3.7"
+license = { text = "AGPL-NC" }
+dependencies = []
+
+[project.scripts]
+gaussian_input = "gaussian_input:main"
+
+[tool.setuptools.package-data]
+abacustest = ["*.py", "*/*.py", "*/*/*.py"]
