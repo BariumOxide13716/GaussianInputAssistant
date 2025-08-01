@@ -159,7 +159,7 @@ class GaussianInput:
         # if an element is 'opt', return 'opt';
         # if an element starts with 'opt=', the element
         for part in parts:
-            if part.lower().startswith('opt=') or part.lower() == 'opt':
+            if part.lower().startswith('opt'):
                 return part
         return None
     
@@ -260,6 +260,49 @@ class GaussianInput:
         for key, value in self._system_controls.items():
             print(f"{key}: {value}")
         _ = self.are_all_required_parameters_set()
+    
+    def save_input_dict_to_json(self, filename):
+        """Save the input parameters to a JSON file."""
+        import json
+        assert isinstance(filename, str), "Filename must be a string."
+        assert self.are_all_required_parameters_set(), "Not all required parameters are set."
+        
+        with open(filename, 'w') as f:
+            # save both input parameters and system controls
+            # combine _input_parameters and _system_controls into a single dictionary
+            combined_dict = self._input_parameters.copy()
+            # convert the numpy arrays to lists for JSON serialization
+            for key in combined_dict:
+                if isinstance(combined_dict[key], np.ndarray):
+                    combined_dict[key] = combined_dict[key].tolist()
+            combined_dict.update(self._system_controls)
+            # write the combined dictionary to the JSON file
+            json.dump(combined_dict, f, indent=4)
+            
+            
+    def load_input_dict_from_json(self, filename):
+        """Load input parameters from a JSON file."""
+        import json
+        assert isinstance(filename, str), "Filename must be a string."
+        if not os.path.exists(filename):
+            raise FileNotFoundError(f"File {filename} does not exist.")
+        
+        with open(filename, 'r') as f:
+            data = json.load(f)
+            for key, value in data.items():
+                if key in self._input_parameters:
+                    if key in ['atoms', 'coordinates']:
+                        # convert lists back to numpy arrays
+                        if isinstance(value, list):
+                            self._input_parameters[key] = np.array(value)
+                        else:
+                            raise ValueError(f"Expected a list for {key}, got {type(value)}.")
+                    else:
+                        self._input_parameters[key] = value
+                elif key in self._system_controls:
+                    self._system_controls[key] = value
+                else:
+                    raise KeyError(f"Invalid key in JSON file: {key}. Must be one of {required_input + optional_input + system_control}.")
 
     def save_gaussian_input_file(self, filename):
         """ Save the Gaussian input parameters to a file.
