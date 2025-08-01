@@ -1,5 +1,5 @@
 %chk=N_PhO3_init.chk
-# hf/3-21g
+# hf/cc-pvtz/auto otherinput1=value1 guess=read otherinput2=value2
 
 planar_CH3_radical
 

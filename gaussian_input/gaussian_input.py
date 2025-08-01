@@ -16,25 +16,45 @@ atom_xyz
 '''
 import numpy as np
 import os
-from .input_keys import required_input, optional_input, system_control
+try:
+    from input_keys import required_input, optional_input, system_control
+except ImportError:
+    try:
+        from .input_keys import required_input, optional_input, system_control
+    except ImportError:
+        raise ImportError("Could not import required input keys. Ensure input_keys.py is in the same directory or accessible in the Python path.")
 
 class GaussianInput:
     def __init__(self):
         self._input_parameters = {}
         self._system_controls = {}
+        
+        for key in required_input:
+            self._input_parameters[key] = None
+        for key in optional_input:
+            self._input_parameters[key] = None
+        for key in system_control:
+            self._system_controls[key] = None
         # set default value for chkpath to the chkpoint file
         # where the script is running
         self._system_controls['chk'] = 'my_calculation.chk'
-        self._input_parameters['method'] = None
-        self._input_parameters['basis'] = None
-        self._input_parameters['charge'] = None
-        self._input_parameters['multiplicity'] = None
+        self._system_controls['nprocshared'] = 1
+        self._system_controls['mem'] = '1GB'
+
         self._input_parameters['title'] = 'Gaussian Calculation'
-        self._input_parameters['atoms'] = None
-        self._input_parameters['coordinates'] = None
-        self._input_parameters['optimization'] = None
-        self._input_parameters['stable'] = None
         self._input_parameters['print_level'] = 'N'  # default print level
+
+        self._minimum_required_input_element = 1
+
+    def get_info_in_method_line(self, input_str):
+        """Check if the input string starts with a valid method line."""
+        assert isinstance(input_str, str), "Input must be a string."
+        if not input_str.startswith('#'):
+            raise ValueError("Input string does not start with '#' for method line check.")
+        if input_str.strip() == '#':
+            raise ValueError("Input string is empty after '#' for method line check.")
+        
+        return input_str[1:].strip()
 
     def set_calculation_parameter(self, key, value):
         """Set a parameter for the Gaussian calculation."""
@@ -45,7 +65,21 @@ class GaussianInput:
                 raise KeyError(f"Invalid input parameter: {key}")
         else:
             raise KeyError(f"Invalid input parameter: {key}. Must be one of {required_input + optional_input}.")
-    
+
+    def get_calculation_parameter(self, key):
+        """Get a parameter for the Gaussian calculation."""
+        if key in self._input_parameters:
+            return self._input_parameters[key]
+        else:
+            raise KeyError(f"Invalid input parameter: {key}. Must be one of {required_input + optional_input}.")
+
+    def get_system_control_parameter(self, key):
+        """Get a system control parameter."""
+        if key in self._system_controls:
+            return self._system_controls[key]
+        else:
+            raise KeyError(f"Invalid system control parameter: {key}. Must be one of {system_control}.")
+
     def are_all_required_parameters_set(self):
         """Check if all required parameters are set."""
         assert isinstance(self._input_parameters, dict), "Input parameters must be a dictionary."
@@ -78,61 +112,61 @@ class GaussianInput:
             raise KeyError(f"Invalid system control parameter: {key}")
         
     def get_print_level(self, input_str):
-        """get the printing level from the input string."""
-        assert isinstance(input_str, str), "Input must be a string."
-
-        if not input_str.startswith('#'):
-            raise ValueError("Input string does not start with '#' for print level extraction.")
-        
-        input_str = input_str.lower()
-        # check whether the second letter in the string is one of T, N, P, or a ' ',
-        # if false, raise an error; otherwise, return the second letter. If the second letter is ' ', return 'N'.
-        if len(input_str) < 2 or input_str[1].lower() not in 'tnp ':
-            raise ValueError("Invalid print level in input string.")
-        return input_str[1] if input_str[1] != ' ' else 'N'
+        input_str = self.get_info_in_method_line(input_str)
+        first_element = input_str.lower().split()[0]
+        # if the first element is 'n', 'p', or 't', then it is a print level
+        if first_element in [ 'n', 'p', 't']:
+            self._minimum_required_input_element = 2
+            return first_element.upper()
+        else:
+            self._minimum_required_input_element = 1
+            return 'N'
                     
     def get_method_basis(self, input_str):
-        """Extract method and basis from the input string."""
-        assert isinstance(input_str, str), "Input must be a string."
-        if not input_str.startswith('#'):
-            raise ValueError("Input string does not start with '#' for method/basis extraction.")
-        input_str = input_str.lower()
         # split the string by spaces, and look for the second element for method/basis
+        input_str = self.get_info_in_method_line(input_str)
         parts = input_str.split()
-        if len(parts) < 2:
+        if len(parts) < self._minimum_required_input_element:
             raise ValueError(f" {str}\n Input string does not contain enough information for method/basis extraction.")
-        if '/' not in parts[1]:
-            raise ValueError(f" {str}\n Input string does not contain a valid method/basis format.\n Expecting \"<method>/<basis> right after the '#' character.")
-        method_basis = parts[1].split('/')
-        if len(method_basis) != 2:
-            raise ValueError(f" {str}\n Input string does not contain a valid method/basis format.\n Expecting \"<method>/<basis> right after the '#' character.")
-        return method_basis[0].strip(), method_basis[1].strip()
+
+        method_basis_string = parts[self._minimum_required_input_element-1]
+        
+        if '/' not in method_basis_string:
+            raise ValueError(f"Invalid method/basis format: {method_basis_string}. Expected format is 'method/basis[/aux_basis_for_density_fitting]'.")
+        
+        components = method_basis_string.split('/')
+        if len(components) < 2 or len(components) > 3:
+            raise ValueError(f"Invalid method/basis format: {method_basis_string}. Expected format is 'method/basis[/aux_basis_for_density_fitting]'.")
+        
+        method = components[0].strip()
+        basis = components[1].strip()
+
+        if len(components) == 3:
+            density_fitting_basis = components[2].strip()
+        else:
+            density_fitting_basis = None
+        
+        return method, basis, density_fitting_basis
+
+
     
-    def get_optimization_requirement(self, input_str):
-        """Check if the geometry optimizaiton keyword is present in the input string."""
-        assert isinstance(input_str, str), "Input must be a string."
-        if not input_str.startswith('#'):
-            raise ValueError("Input string does not start with '#' for optimization extraction.")
-        input_str = input_str.lower()
+    def get_geometry_optimization(self, input_str):
+        input_str = self.get_info_in_method_line(input_str)
         parts = input_str.split()
-        if len(parts) < 3:
+        if len(parts) < self._minimum_required_input_element+1:
             return None
         # loop over the elements in the parts list, 
         # if an element is 'opt', return 'opt';
         # if an element starts with 'opt=', the element
         for part in parts:
-            if part.startswith('opt=') or part == 'opt':
+            if part.lower().startswith('opt=') or part.lower() == 'opt':
                 return part
         return None
     
-    def get_stable_requirement(self, input_str):
-        """Check if the stable keyword is present in the input string."""
-        assert isinstance(input_str, str), "Input must be a string."
-        if not input_str.startswith('#'):
-            raise ValueError("Input string does not start with '#' for stability extraction.")
-        input_str = input_str.lower()
+    def get_stability_check(self, input_str):
+        input_str = self.get_info_in_method_line(input_str)
         parts = input_str.split()
-        if len(parts) < 3:
+        if len(parts) < self._minimum_required_input_element+1:
             return None
         # loop over the elements in the parts list,
         # if an element is 'stable', return 'stable'
@@ -140,6 +174,45 @@ class GaussianInput:
             if part == 'stable':
                 return part
         return None
+    
+    def get_initial_guess(self, input_str):
+        """Extract the initial guess from the input string."""
+        input_str = self.get_info_in_method_line(input_str)
+        parts = input_str.split()
+        if len(parts) < self._minimum_required_input_element+1:
+            return None
+        # loop over the elements in the parts list,
+        # if an element is 'guess', return 'guess'
+        for part in parts:
+            if part.lower().startswith('guess='):
+                return part
+        return None
+    
+    def get_other_options(self, input_str):
+        """Extract other options from the input string."""
+        input_str = self.get_info_in_method_line(input_str)
+        parts = input_str.split()
+        if len(parts) < self._minimum_required_input_element+1:
+            return None
+        
+        # initialize an empty list to hold other options
+        other_options = []
+        # loop over the elements in the parts list, excluding the first
+        # self._minimum_required_input_element elements,
+        # see if all self.get_geometry_optimization(part),
+        # self.get_stability_check(part), self.get_initial_guess(part), return None
+        # if so, append part to other_options
+        for part in parts[self._minimum_required_input_element:]:
+            modified_str = "# print_level method " + part
+            if (self.get_geometry_optimization(modified_str) is None and
+                self.get_stability_check(modified_str) is None and
+                self.get_initial_guess(modified_str) is None):
+                other_options.append(part)
+
+        if other_options == []:
+            return None
+        else:
+            return other_options
     
     def get_charge_multiplicity(self, input_str):
         """Extract charge and multiplicity from the input string."""
@@ -214,11 +287,19 @@ class GaussianInput:
             method = self._input_parameters['method']
             basis = self._input_parameters['basis']
             print_level = self._input_parameters.get('print_level', 'N')
-            f.write(f"#{print_level} {method}/{basis} ")
+            f.write(f"#{print_level} {method}/{basis}")
+            if self._input_parameters['density_fitting'] is not None:
+                f.write(f"/{self._input_parameters['density_fitting']}")
+            f.write(" ")
             if self._input_parameters['optimization'] is not None:
                 f.write(f"{self._input_parameters['optimization']} ")
             if self._input_parameters['stable'] is not None:
                 f.write(f"{self._input_parameters['stable']} ")
+            if self._input_parameters['guess'] is not None:
+                f.write(f"{self._input_parameters['guess']} ")
+            if self._input_parameters['other_options'] is not None:
+                f.write(" ".join(self._input_parameters['other_options']))
+            # write a blank line after the method and basis
             f.write("\n\n")
             
             # write title
@@ -238,6 +319,8 @@ class GaussianInput:
             
             # write a blank line at the end
             f.write("\n")
+
+    
 
     def read_gaussian_input_file(self, filename):
         """Read Gaussian input from a file."""
@@ -267,7 +350,7 @@ class GaussianInput:
                     key, value = line.split('=')
                     key = key.strip('%').strip().lower()
                     value = value.strip()
-                    self.set_system_control_parameter(key, value)
+                    self.set_system_control_parameter(key.lower(), value)
                 
             elif line.startswith('#'):
                 # method and basis
@@ -276,15 +359,22 @@ class GaussianInput:
                 print_level = self.get_print_level(line)
                 self.set_calculation_parameter('print_level', print_level)
 
-                method, basis = self.get_method_basis(line)
+                method, basis, density_fitting_basis = self.get_method_basis(line)
                 self.set_calculation_parameter('method', method)
                 self.set_calculation_parameter('basis', basis)
+                self.set_calculation_parameter('density_fitting', density_fitting_basis)
 
-                require_optimization = self.get_optimization_requirement(line)
-                self.set_calculation_parameter('optimization', require_optimization)
+                do_geometry_optimization = self.get_geometry_optimization(line)
+                self.set_calculation_parameter('optimization', do_geometry_optimization)
 
-                require_stable = self.get_stable_requirement(line)
-                self.set_calculation_parameter('stable', require_stable)
+                do_stability_check = self.get_stability_check(line)
+                self.set_calculation_parameter('stable', do_stability_check)
+
+                set_initial_guess = self.get_initial_guess(line)
+                self.set_calculation_parameter('guess', set_initial_guess)
+
+                other_options = self.get_other_options(line)
+                self.set_calculation_parameter('other_options', other_options)
 
                 if_method_details_read = True
 

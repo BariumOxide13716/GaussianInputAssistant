@@ -9,5 +9,7 @@ if __name__ == "__main__":
     
     # Print the parameters
     gaussian_input.print_parameters()
-    
+    gaussian_input.set_calculation_parameter('method', 'umn15l')
+    gaussian_input.set_calculation_parameter('density_fitting', None)
+    gaussian_input.save_gaussian_input_file("output.gjf")
     

@@ -1,4 +1,4 @@
-# gaussian_input_modifier
+# GaussianInputAssistant 
 
 
 

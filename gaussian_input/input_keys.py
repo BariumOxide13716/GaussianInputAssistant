@@ -17,10 +17,15 @@ optional_input = [
     'optimization',
     'freq',
     'stable',
-    'print_level'
+    'guess',
+    'print_level',
+    'density_fitting',
+    'other_options'
 ]
 
 system_control = [
-    'chk'
+    'chk',
+    'mem',
+    'nprocshared'
 ]
 
