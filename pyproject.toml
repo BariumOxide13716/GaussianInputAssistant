@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "gaussian_input"
+name = "gaussian_py_interface"
 version = "0.1.0"
-description = "A tool for reading, modifying and writing Gaussian input files."
+description = "A tool for reading, modifying and writing Gaussian input files, running Gaussian, and extracting results from Gaussian outputs."
 authors = [
     { name="Jie J. Bao", email="baoxx138@umn.edu" }
 ]
@@ -15,7 +15,7 @@ license = { text = "AGPL-NC" }
 dependencies = []
 
 [project.scripts]
-gaussian_input = "gaussian_input:main"
+gaussian_py_interface = "gaussian_py_interface:main"
 
 [tool.setuptools.package-data]
-abacustest = ["*.py", "*/*.py", "*/*/*.py"]
+gaussian_py_interface = ["*.py", "*/*.py", "*/*/*.py"]
