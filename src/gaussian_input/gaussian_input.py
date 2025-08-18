@@ -207,12 +207,6 @@ class GaussianInput:
         else:
             raise TypeError("Other options must be a string or a list of strings.")
 
-    def get_other_options(self, input_str):
-        """Extract other options from the input string."""
-        input_str = self.get_info_in_method_line(input_str)
-        parts = input_str.split()
-        if len(parts) < self._minimum_required_input_element+1:
-            return None
 
     def get_other_options(self, input_str):
         """Extract other options from the input string."""
@@ -368,7 +362,7 @@ class GaussianInput:
             if self._input_parameters['guess'] is not None:
                 f.write(f"{self._input_parameters['guess']} ")
             if self._input_parameters['other_options'] is not None:
-                f.write(" ".join(self._input_parameters['other_options']))
+                f.write(" "+self._input_parameters['other_options'])
             # write a blank line after the method and basis
             f.write("\n\n")
             
