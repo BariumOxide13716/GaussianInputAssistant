@@ -330,7 +330,7 @@ class GaussianInput:
                 else:
                     raise KeyError(f"Invalid key in JSON file: {key}. Must be one of {required_input + optional_input + system_control}.")
 
-    def save_gaussian_input_file(self, filename):
+    def save_gaussian_input_file(self, filename, overwrite=True):
         """ Save the Gaussian input parameters to a file.
             if filename exists, rename filename to filename.bak_date,
             and show a warning to the user.
@@ -343,9 +343,10 @@ class GaussianInput:
             "Number of atoms and coordinates do not match."
 
         if os.path.exists(filename):
-            backup_filename = f"{filename}.bak_{np.datetime64('now', 's')}"
-            os.rename(filename, backup_filename)
-            print(f"Warning: {filename} already exists. Renamed to {backup_filename}.")
+            if not overwrite:
+                backup_filename = f"{filename}.bak_{np.datetime64('now', 's')}"
+                os.rename(filename, backup_filename)
+                print(f"Warning: {filename} already exists. Renamed to {backup_filename}.")
 
         with open(filename, 'w') as f:
             # write system control parameters
