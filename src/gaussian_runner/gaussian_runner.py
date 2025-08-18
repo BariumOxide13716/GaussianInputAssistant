@@ -4,12 +4,13 @@ It assumes that the path to gaussian is added to the system path.
 """
 
 import subprocess
+import numpy as np
 
 def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     return result
 
-def run_gaussian(input_file, output_file, gaussian_executable="g16", message = 'will run gaussian'):
+def run_gaussian(input_file, output_file, gaussian_executable="g16", starting_message="running gaussian...", end_message="gaussian run completed successfully"):
     """
     Runs Gaussian with the specified input file and writes the output to the output file.
     
@@ -18,11 +19,14 @@ def run_gaussian(input_file, output_file, gaussian_executable="g16", message = '
         output_file (str): The path where the output will be written.
             
     Returns:
-        subprocess.CompletedProcess: The result of the command execution.
+        
     """
     command = f"{gaussian_executable} < {input_file} > {output_file}"
-    print(message)
-    return run_command(command)
+    print(np.datetime64('now', 's'), starting_message)
+    result = run_command(command)
+    print(np.datetime64('now', 's'), end_message)
+    return result
+
 
 if __name__ == "__main__":
     import sys
