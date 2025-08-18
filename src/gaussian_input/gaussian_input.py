@@ -148,8 +148,13 @@ class GaussianInput:
         
         return method, basis, density_fitting_basis
 
+    def remove_ending(self, input_str, endings='\n'):
+        """if input_str ends with one or multiple endings, remove them."""
+        assert isinstance(input_str, str), "Input must be a string."
+        while input_str.endswith(endings):
+            input_str = input_str[:-len(endings)]
+        return input_str
 
-    
     def get_geometry_optimization(self, input_str):
         input_str = self.get_info_in_method_line(input_str)
         parts = input_str.split()
@@ -346,8 +351,8 @@ class GaussianInput:
             f.write("\n\n")
             
             # write title
-            title = self._input_parameters['title']
-            f.write(f"{title}\n")
+            title = self.remove_ending(self._input_parameters['title'], endings = '\n')
+            f.write(f"{title}\n\n")
             
             # write charge and multiplicity
             charge = self._input_parameters['charge']
