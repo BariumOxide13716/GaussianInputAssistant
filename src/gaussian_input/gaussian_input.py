@@ -193,6 +193,27 @@ class GaussianInput:
                 return part
         return None
     
+
+    def add_other_options(self, other_option):
+        """Add other options to the input parameters."""
+        if isinstance(other_option, str):
+            if self._input_parameters['other_options'] is None:
+                self._input_parameters['other_options'] = []
+            self._input_parameters['other_options'].append(other_option)
+        elif isinstance(other_option, list):
+            if self._input_parameters['other_options'] is None:
+                self._input_parameters['other_options'] = []
+            self._input_parameters['other_options'].extend(other_option)
+        else:
+            raise TypeError("Other options must be a string or a list of strings.")
+
+    def get_other_options(self, input_str):
+        """Extract other options from the input string."""
+        input_str = self.get_info_in_method_line(input_str)
+        parts = input_str.split()
+        if len(parts) < self._minimum_required_input_element+1:
+            return None
+
     def get_other_options(self, input_str):
         """Extract other options from the input string."""
         input_str = self.get_info_in_method_line(input_str)
@@ -431,7 +452,7 @@ class GaussianInput:
                 iline_method_details = i
                 break
 
-        title = lines[iline_method_details + 2]
+        title = self.remove_ending(lines[iline_method_details + 2], endings = '\n')
         self.set_calculation_parameter('title', title)
         
         charge, multiplicity = self.get_charge_multiplicity(lines[iline_method_details + 4])
