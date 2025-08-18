@@ -9,7 +9,7 @@ def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     return result
 
-def run_gaussian(input_file, output_file, gaussian_executable="g16"):
+def run_gaussian(input_file, output_file, gaussian_executable="g16", message = 'will run gaussian'):
     """
     Runs Gaussian with the specified input file and writes the output to the output file.
     
@@ -21,6 +21,7 @@ def run_gaussian(input_file, output_file, gaussian_executable="g16"):
         subprocess.CompletedProcess: The result of the command execution.
     """
     command = f"{gaussian_executable} < {input_file} > {output_file}"
+    print(message)
     return run_command(command)
 
 if __name__ == "__main__":

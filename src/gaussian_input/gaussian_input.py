@@ -347,7 +347,7 @@ class GaussianInput:
             
             # write title
             title = self._input_parameters['title']
-            f.write(f"{title}\n\n")
+            f.write(f"{title}\n")
             
             # write charge and multiplicity
             charge = self._input_parameters['charge']
