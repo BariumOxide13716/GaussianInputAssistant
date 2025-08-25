@@ -2,10 +2,10 @@
 This file is a class for holding the output data, and it inherits from
 the class GaussianInput gaussian_input.
 '''
-
+import os
 from input_modifier.gaussian_input import GaussianInput as gi
 from utils.pygrep import py_grep
-from utils.logger import IOUtil as ioutil
+from utils.logger import Logger
 
 class GaussianOutput(gi):
     """
@@ -18,14 +18,14 @@ class GaussianOutput(gi):
         self._extension = None
         self._termination_status = None
 
-        self._logger = ioutil("gaussian_output_log.txt")
+        self._logger = Logger("gaussian_output_log.txt")
 
         self._gaussian_normal_termination_string = "Normal termination of Gaussian"
 
     def set_output_file(self, filename):
         assert isinstance(filename, str), "Filename must be a string."
         self._output_file = filename
-        self._file_name, self._extension = self.get_file_name_and_extension(filename)
+        self._file_name, self._extension = os.path.splitext(filename)
 
     def check_calculation_termination_status(self):
         assert self._output_file is not None, "Output file must be set before checking termination."
