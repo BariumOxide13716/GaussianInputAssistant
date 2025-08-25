@@ -13,6 +13,13 @@ from input_parameters import input_geometry
 
 class Geometry:
 
+    required_keys = {
+        'charge',
+        'multiplicity',
+        'atoms',
+        'coordinates'
+    }
+
     def __init__(self):
         self.geometry = {}
         for key in input_geometry:
@@ -82,6 +89,20 @@ class Geometry:
         return self.geometry['atoms']
 
     # readers
+    def read_atoms_and_coordinates_from_string(self, string):
+        assert isinstance(string, str), "Input must be a string."
+        lines = string.strip().split("\n")
+        for line in lines:
+            parts = line.split()
+            assert len(parts) == 4, "Each line must contain an atom and three coordinates."
+            atom = parts[0].capitalize()
+            assert atom in periodic_table, f"Atom {atom} is not recognized."
+            try:
+                coord = [float(x) for x in parts[1:4]]
+            except ValueError:
+                raise ValueError("Coordinates must be numeric values.")
+            return atom, coord
+
     def read_atoms_and_coordinates_from_array(self, array):
         assert isinstance(array, list), "Input must be a list."
         assert len(array) > 0, "Input list must contain at least 1 element"
@@ -95,14 +116,7 @@ class Geometry:
             if item == "":
                 continue
             assert isinstance(item, str), "Each item in the list must be a string."
-            parts = item.split()
-            assert len(parts) == 4, "Each line must contain an atom and three coordinates."
-            atom = parts[0].capitalize()
-            assert atom in periodic_table, f"Atom {atom} is not recognized."
-            try:
-                coord = [float(x) for x in parts[1:4]]
-            except ValueError:
-                raise ValueError("Coordinates must be numeric values.")
+            atom, coord = self.read_atoms_and_coordinates_from_string(item)
             self.add_atom(atom)
             self.add_coordinate(coord)
 
@@ -142,3 +156,70 @@ class Geometry:
         with open(filename, 'r') as file:
             lines = file.readlines()
         self.read_geometry_from_input_array(lines)
+
+    # geometry part generator
+    def sanity_check(self):
+        for key in self.required_keys:
+            assert self.geometry[key] is not None, f"{key} is not set."
+        assert len(self.geometry['atoms']) == len(self.geometry['coordinates']), "Number of atoms and coordinates must match."
+
+    def generate_geometry_string(self):
+        self.sanity_check()
+
+        if self.geometry['title'] is None:
+            self.geometry['title'] = " "
+        
+        display_in_file = ""
+        display_in_file += f"{self.geometry['title']}\n"
+        display_in_file += "\n"
+        display_in_file += f"{self.geometry['multiplicity']} {self.geometry['charge']}\n"
+        for atom, coord in zip(self.geometry['atoms'], self.geometry['coordinates']):
+            display_in_file += f"{atom} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n"
+        display_in_file += "\n"
+        return display_in_file
+
+    # data structure printers
+    def show_current_settings(self):
+        print("Current settings for geometry:")
+        print(f"Title: {self.geometry['title']}")
+        print()
+        print(f"Multiplicity: {self.geometry['multiplicity']}")
+        print(f"Charge: {self.geometry['charge']}")
+        print("Atoms and Coordinates:")
+        for atom, coord in zip(self.geometry['atoms'], self.geometry['coordinates']):
+            print(f"  {atom}: {coord[0]:.6f}, {coord[1]:.6f}, {coord[2]:.6f}")
+
+    def pack_current_settings_to_dict(self):
+        current_settings = {
+            "title": self.geometry['title'],
+            "multiplicity": self.geometry['multiplicity'],
+            "charge": self.geometry['charge'],
+            "atoms": self.geometry['atoms'],
+            "coordinates": self.geometry['coordinates']
+        }
+        return current_settings
+
+    def save_current_settings_to_json(self, filename):
+        assert isinstance(filename, str), "Filename must be a string."
+        assert filename.endswith('.json'), "Filename must end with .json"
+        if os.path.isfile(filename):
+            with open(filename, 'r') as f:
+                data_in_file = json.load(f)
+        else:
+            data_in_file = {}
+        data_in_file['geometry'] = self.pack_current_settings_to_dict()
+        with open(filename, 'w') as f:
+            json.dump(data_in_file, f, indent=4)
+
+    # data structure reader (from a json file)
+    def get_current_settings_from_json(self, filename):
+        assert isinstance(filename, str), "Filename must be a string."
+        assert filename.endswith('.json'), "Filename must end with .json"
+        assert os.path.isfile(filename), f"File {filename} does not exist."
+        with open(filename, 'r') as f:
+            data = json.load(f).get('geometry', None)
+        if data is None:
+            print(f"No geometry information found in {filename}.")
+        else:
+            for key in input_geometry:
+                self.geometry[key] = data.get(key, None)
