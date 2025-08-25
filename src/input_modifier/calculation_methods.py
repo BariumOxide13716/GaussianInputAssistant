@@ -93,6 +93,8 @@ class CalculationMethods():
         if option in optional_standalone:
             print(f"the \"other option:\", {option}, is recognized as a standalone option")
             return
+        print(f"adding other option: {option}")
+        print(f"other options: {self.other_options}")
         assert option not in self.other_options, f"Option '{option}' is already in the list."
         self.other_options.append(option)
 
@@ -196,7 +198,11 @@ class CalculationMethods():
     
     def is_string_the_method_part(self, string):
         assert isinstance(string, str), "Input must be a string."
-        return '/' in string and string.strip().split('/')[0].lower() in electronic_structure_method['theory']
+        if '/' in string:
+            method = string.strip().split('/')[0].lower()
+            return method in electronic_structure_method['theory'] or method[1:] in electronic_structure_method['theory']
+        else:
+            return False
 
     def is_string_a_switch(self, string):
         assert isinstance(string, str), "Input must be a string."
@@ -233,6 +239,7 @@ class CalculationMethods():
                 self.set_optional_withvalue(key, value)
             else:
                 self.add_other_option(item)
+
     
     def read_gaussian_input_from_string(self, string):
         assert isinstance(string, str), "Input must be a string."
