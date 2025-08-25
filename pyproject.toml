@@ -18,4 +18,4 @@ dependencies = []
 gaussian_py_interface = "gaussian_py_interface:main"
 
 [tool.setuptools.package-data]
-gaussian_py_interface = ["*.py", "*/*.py", "*/*/*.py"]
+gaussian_py_interface = ["src/*.py", "src/*/*.py"]
