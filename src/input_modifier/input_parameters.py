@@ -13,19 +13,19 @@ system_control = [
 
 print_level = ['p', 't', 'n']
 
-es_method = { # standing for electronic structure method
+electronic_structure_method = {
     'theory': ['mn15l', 'umn15l'], 
     'basis': ['jul-cc-pvtz'],
     'df_basis': ['auto']
 }
 
-optional_switch = [
+optional_standalone = [
     'opt',
     'freq',
     'nosymm'
 ]
 
-optional_method = {
+optional_withvalue = {
     'stable': ['opt'],
     'guess': ['read']
 }
