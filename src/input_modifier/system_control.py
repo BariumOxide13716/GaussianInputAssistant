@@ -2,7 +2,7 @@
 this class is a container for the system controls in a gaussian input file
 """
 
-from input_parameters import system_control
+from .input_parameters import system_control
 import os
 import json
 
@@ -20,14 +20,14 @@ class SystemControl():
     # setter
     def set_system_control(self, key, value):
         assert isinstance(key, str), "Key must be a string."
-        key = key.lower()
-        assert key in self.system_control, f"Invalid system control key: {key}"
+        key = key.lower().strip()
+        assert key in system_control, f"Invalid system control key: {key}, {system_control}"
         self.system_control[key] = value
 
     # getter
     def get_system_control(self, key):
         assert isinstance(key, str), "Key must be a string."
-        key = key.lower()
+        key = key.lower().strip()
         assert key in self.system_control, f"Invalid system control key: {key}"
         return self.system_control[key]
     
@@ -37,20 +37,24 @@ class SystemControl():
         assert string.startswith("%"), "Input line must start with '%'."
         inputs = string[1:].strip().split('=')
         assert len(inputs) > 1, f"Failed to obtain any information from {string}"
-        key = inputs[0][1:].lower()
-        value = inputs[1]
+        key = inputs[0].lower().strip()
+        value = inputs[1].strip()
         self.set_system_control(key, value)
     
     def read_system_control_from_array(self, array):
         assert isinstance(array, list), "Input must be a list."
         for item in array:
-            self.read_system_control_from_string(item.strip())
+            if item.strip().startswith("%"):
+                self.read_system_control_from_string(item.strip())
     
     def read_system_control_from_file(self, filename):
         assert os.path.isfile(filename), f"File {filename} does not exist."
         with open(filename, 'r') as file:
             lines = file.readlines()
-        self.read_system_control_from_array(lines)
+        # for each element in lines, if the element.strip() starts with "%", add it
+        # to the array, system_control_lines
+        system_control_lines = [line.strip() for line in lines if line.strip().startswith("%")]
+        self.read_system_control_from_array(system_control_lines)
     
     # data structure printers
     def show_current_settings(self):

@@ -3,7 +3,7 @@ This class is the container of the calculation methods in gaussian.
 """
 import json
 import os
-from input_parameters import print_level, \
+from .input_parameters import print_level, \
                              electronic_structure_method, \
                              optional_standalone, \
                              optional_withvalue
@@ -23,33 +23,44 @@ class CalculationMethods():
 # setters
     def set_print_level(self, level):
         assert isinstance(level, str), "Print level must be a string."
-        assert level.lower() in print_level, f"Print level must be one of {print_level}."
+        level = level.lower().strip()
+        if level.startswith('#'):
+            level = level[1:]
+        if level == "":
+            self.print_level = 'n'
+            return
+        assert level in print_level, f"Print level must be one of {print_level}."
         self.print_level = level
 
     def turn_on_switch(self, method):
         assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
+        method = method.lower().strip()
         assert method in optional_standalone, f"Method must be one of {optional_standalone}."
         self.method_optional_standalone[method] = True
 
     def turn_off_switch(self, method):
         assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
+        method = method.lower().strip()
         assert method in optional_standalone, f"Method must be one of {optional_standalone}."
         self.method_optional_standalone[method] = False
 
     def set_electronic_structure_method(self, method, value):
         """setting method value for keys in electronic_structure_method"""
-        assert isinstance(value, str), "Value must be a string."
-        assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
-        assert method in electronic_structure_method, f"Method must be one of {electronic_structure_method}."
-        assert value.lower() in electronic_structure_method[method], f"Value must be one of {electronic_structure_method[method]}."
+        assert isinstance(value, str), f"Value must be a string. {value}"
+        assert isinstance(method, str), f"Method must be a string. {method}"
+        method = method.lower().strip()
+        value = value.lower().strip()
+        if method == 'theory' and value.startswith('u'):
+            value_to_check = value[1:]
+        else:
+            value_to_check = value
+        assert method in electronic_structure_method, f"Method must be one of {electronic_structure_method}. Got{method}"
+        assert value_to_check in electronic_structure_method[method], f"Value must be one of {electronic_structure_method[method]}."
         self.method_electronic_structure[method] = value
     
     def unset_electronic_structure_method(self, method):
         assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
+        method = method.lower().strip()
         assert method in electronic_structure_method, f"Method must be one of {electronic_structure_method}."
         self.method_electronic_structure[method] = None
 
@@ -57,14 +68,14 @@ class CalculationMethods():
         """setting method value for keys in optional_withvalue"""
         assert isinstance(value, str), "Value must be a string."
         assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
+        method = method.lower().strip()
         assert method in optional_withvalue, f"Method must be one of {optional_withvalue}."
         assert value in optional_withvalue[method], f"Value must be one of {optional_withvalue[method]}."
         self.method_optional_withvalue[method] = value
     
     def unset_optional_withvalue(self, method):
         assert isinstance(method, str), "Method must be a string."
-        method = method.lower()
+        method = method.lower().strip()
         assert method in optional_withvalue, f"Method must be one of {optional_withvalue}."
         self.method_optional_withvalue[method] = None
 
@@ -72,7 +83,15 @@ class CalculationMethods():
         if not isinstance(option, str):
             option = str(option)
         option = option.lower().strip()
+        if option.startswith('#'):
+            return
         if option == "":
+            return
+        if '=' in option and option.split('=')[0].strip() in optional_withvalue:
+            print(f"the \"other option:\", {option}, is recognized as an option_withvalues")
+            return
+        if option in optional_standalone:
+            print(f"the \"other option:\", {option}, is recognized as a standalone option")
             return
         assert option not in self.other_options, f"Option '{option}' is already in the list."
         self.other_options.append(option)
@@ -80,7 +99,7 @@ class CalculationMethods():
     def remove_other_option(self, option):
         if not isinstance(option, str):
             option = str(option)
-        option = option.lower()
+        option = option.lower().strip()
         assert option in self.other_options, f"Option '{option}' is not in the list."
         self.other_options.remove(option)
 
@@ -154,8 +173,11 @@ class CalculationMethods():
     def read_print_level_from_array(self, array):
         assert isinstance(array, list), "Input must be a list."
         assert len(array) > 1, "Input list must contain at least 2 elements."
-        if array[0][1:].lower() in print_level:
-            self.set_print_level(array[0])
+        element = array[0].lower()
+        if element.startswith('#'):
+            element = element[1:]
+        if element in print_level:
+            self.set_print_level(element)
 
     def read_electronic_structure_method_from_array(self, array):
         assert isinstance(array, list), "Input must be a list."
@@ -165,6 +187,7 @@ class CalculationMethods():
         self.set_electronic_structure_method('theory', theory)
         self.set_electronic_structure_method('basis', basis)
         if df_basis:
+            df_basis = df_basis[0]
             self.set_electronic_structure_method('df_basis', df_basis)
 
     def is_string_the_start(self, string):
@@ -252,10 +275,10 @@ class CalculationMethods():
         print("Current settings for calculation methods:")
         print(f"Print level: {self.print_level}")
         print(f"Electronic structure method: {self.method_electronic_structure}")
-        print(f"Switches: {self.method_optional_standalone}")
+        print(f"Standalone methods: {self.method_optional_standalone}")
         print(f"Optional methods: {self.method_optional_withvalue}")
         print(f"Other options: {self.other_options}")
-        print(f"Full method string: {self.generate_full_method_string()}")    
+        print(f"Full method string: {self.generate_calculation_methods_string()}")    
 
     def pack_current_settings_to_dict(self):
         current_settings = {

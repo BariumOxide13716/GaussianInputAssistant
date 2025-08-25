@@ -3,10 +3,9 @@ This class integrates system_control, calculation methods, and geometry
 """
 
 import os
-import json
 from .system_control import SystemControl as SysCon
 from .calculation_methods import CalculationMethods as CalMeth
-from .geometry import Geometry as Geom
+from .gaussian_geometry import Geometry as Geom
 
 class GaussianInput(SysCon, CalMeth, Geom):
     def __init__(self):
@@ -19,16 +18,13 @@ class GaussianInput(SysCon, CalMeth, Geom):
     # some of them should have been defined in the base classes
 
     # readers
-    def read_from_gaussian_input_file(self, filename):
+    def read_input_from_file(self, filename):
         assert os.path.isfile(filename), f"File {filename} does not exist."
-        with open(filename, 'r') as f:
-            lines = f.readlines()
-            for i, line in enumerate(lines):
-                lines[i] = line.strip()
-            self.read_system_control_from_array(lines) # defined in SystemControl
-            self.read_gaussian_input_from_array(lines) # defined in CalculationMethods
-            self.read_atoms_and_coordinates_from_array(lines) # defined in Geometry
-    
+
+        self.read_system_control_from_file(filename) # defined in SystemControl
+        self.read_gaussian_input_from_file(filename) # defined in CalculationMethods
+        self.read_geometry_from_file(filename) # defined in Geometry
+
     # input file generator
     def generate_gaussian_input_string(self):
         input_string = ""

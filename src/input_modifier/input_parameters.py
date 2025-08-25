@@ -14,8 +14,8 @@ system_control = [
 print_level = ['p', 't', 'n']
 
 electronic_structure_method = {
-    'theory': ['mn15l', 'umn15l'], 
-    'basis': ['jul-cc-pvtz'],
+    'theory': ['mn15l', 'hf', 'ccsd', 'mp2', 'pbepbe', 'b3lyp', 'wb97x', 'm062x', 'pbe0'], 
+    'basis': ['aug-cc-pvtz', 'jul-cc-pvtz', 'jun-cc-pvtz'],
     'df_basis': ['auto']
 }
 

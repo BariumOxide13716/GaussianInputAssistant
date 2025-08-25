@@ -17,5 +17,5 @@ dependencies = []
 [project.scripts]
 gaussian_py_interface = "gaussian_py_interface:main"
 
-[tool.setuptools.package-data]
-gaussian_py_interface = ["src/*.py", "src/*/*.py"]
+[tool.setuptools.packages.find]
+where = ["src"]

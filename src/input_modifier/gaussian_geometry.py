@@ -8,8 +8,8 @@ For current purpose, it works with Cartisian coordinates
 import os
 import json
 import numpy as np
-from ..constants.periodic_table import periodic_table
-from input_parameters import input_geometry
+from constants.periodic_table import periodic_table
+from .input_parameters import input_geometry
 
 class Geometry:
 
@@ -128,9 +128,8 @@ class Geometry:
             assert isinstance(array[i], str), "Each item in the list must be a string."
         for i in range(len(array)):
             array[i] = array[i].strip()
-
         self.set_title(array[0])
-        multiplicity, charge = array[2].split()
+        charge, multiplicity = array[2].split()
         self.set_multiplicity(int(multiplicity))
         self.set_charge(int(charge))
         self.read_atoms_and_coordinates_from_array(array[3:])
@@ -148,8 +147,7 @@ class Geometry:
             if item.startswith('#'):
                 iline = i
                 break
-        
-        self.read_geometry_from_geometry_array(array[iline+1:])
+        self.read_geometry_from_geometry_array(array[iline+2:])
 
     def read_geometry_from_file(self, filename):
         assert os.path.isfile(filename), f"File {filename} does not exist."
@@ -172,7 +170,7 @@ class Geometry:
         display_in_file = ""
         display_in_file += f"{self.geometry['title']}\n"
         display_in_file += "\n"
-        display_in_file += f"{self.geometry['multiplicity']} {self.geometry['charge']}\n"
+        display_in_file += f"{self.geometry['charge']} {self.geometry['multiplicity']}\n"
         for atom, coord in zip(self.geometry['atoms'], self.geometry['coordinates']):
             display_in_file += f"{atom} {coord[0]:.6f} {coord[1]:.6f} {coord[2]:.6f}\n"
         display_in_file += "\n"
@@ -182,9 +180,8 @@ class Geometry:
     def show_current_settings(self):
         print("Current settings for geometry:")
         print(f"Title: {self.geometry['title']}")
-        print()
-        print(f"Multiplicity: {self.geometry['multiplicity']}")
         print(f"Charge: {self.geometry['charge']}")
+        print(f"Multiplicity: {self.geometry['multiplicity']}")
         print("Atoms and Coordinates:")
         for atom, coord in zip(self.geometry['atoms'], self.geometry['coordinates']):
             print(f"  {atom}: {coord[0]:.6f}, {coord[1]:.6f}, {coord[2]:.6f}")
