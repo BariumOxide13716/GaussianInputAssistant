@@ -47,7 +47,6 @@ class GaussianInput(SysCon, CalMeth, Geom):
     
     # data structure saver
     def save_current_settings_to_json(self, filename):
-        assert os.path.exists(filename), f"File {filename} does not exist."
         assert filename.endswith(".json"), "Filename must end with .json"
         SysCon.save_current_settings_to_json(self, filename)
         CalMeth.save_current_settings_to_json(self, filename)
