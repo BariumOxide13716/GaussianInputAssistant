@@ -32,17 +32,17 @@ class CalculationMethods():
         assert level in print_level, f"Print level must be one of {print_level}."
         self.print_level = level
 
-    def turn_on_switch(self, method):
+    def set_method_standalone(self, method):
         assert isinstance(method, str), "Method must be a string."
         method = method.lower().strip()
         assert method in optional_standalone, f"Method must be one of {optional_standalone}."
         self.method_optional_standalone[method] = True
 
-    def turn_off_switch(self, method):
+    def unset_method_standalone(self, method):
         assert isinstance(method, str), "Method must be a string."
         method = method.lower().strip()
         assert method in optional_standalone, f"Method must be one of {optional_standalone}."
-        self.method_optional_standalone[method] = False
+        del self.method_optional_standalone[method]
 
     def set_electronic_structure_method(self, method, value):
         """setting method value for keys in electronic_structure_method"""
@@ -233,7 +233,7 @@ class CalculationMethods():
             elif self.is_string_the_method_part(item):
                 continue
             elif self.is_string_a_switch(item):
-                self.turn_on_switch(item)
+                self.set_method_standalone(item)
             elif self.is_string_an_optional_withvalue(item):
                 key, value = item.split('=')
                 self.set_optional_withvalue(key, value)
@@ -285,9 +285,10 @@ class CalculationMethods():
         print(f"Standalone methods: {self.method_optional_standalone}")
         print(f"Optional methods: {self.method_optional_withvalue}")
         print(f"Other options: {self.other_options}")
-        print(f"Full method string: {self.generate_calculation_methods_string()}")    
+        #print(f"Full method string: {self.generate_calculation_methods_string()}")    
 
-    def pack_current_settings_to_dict(self):
+    def pack_method_settings_to_dict(self):
+        print('calling packing in method')
         current_settings = {
             "print_level": self.print_level,
             "method_electronic_structure": self.method_electronic_structure,
@@ -306,7 +307,7 @@ class CalculationMethods():
                 data_in_file = json.load(f)
         else:
             data_in_file = {}
-        data_in_file['calculation_methods'] = self.pack_current_settings_to_dict()
+        data_in_file['calculation_methods'] = self.pack_method_settings_to_dict()
         with open(filename, 'w') as f:
             json.dump(data_in_file, f, indent=4)
 

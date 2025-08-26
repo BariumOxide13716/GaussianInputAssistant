@@ -6,6 +6,7 @@ For current purpose, it works with Cartisian coordinates
 """
 
 import os
+import re
 import json
 import numpy as np
 from constants.periodic_table import periodic_table
@@ -93,14 +94,23 @@ class Geometry:
         assert isinstance(string, str), "Input must be a string."
         lines = string.strip().split("\n")
         for line in lines:
-            parts = line.split()
-            assert len(parts) == 4, "Each line must contain an atom and three coordinates."
+            parts = re.split(r'[\s,]+', line) # split by whitespace (from input) or comma (from output)
             atom = parts[0].capitalize()
             assert atom in periodic_table, f"Atom {atom} is not recognized."
-            try:
-                coord = [float(x) for x in parts[1:4]]
-            except ValueError:
-                raise ValueError("Coordinates must be numeric values.")
+            match len(parts):
+                case 4:
+                    try:
+                        coord = [float(x) for x in parts[1:]]
+                    except ValueError:
+                        raise ValueError("Coordinates must be numeric values.")
+                case 5:
+                    try:
+                        coord = [float(x) for x in parts[2:]]
+                    except ValueError:
+                        raise ValueError("Coordinates must be numeric values.")
+                case _:
+                    raise ValueError("Each line must contain an atom and three coordinates.")
+
             return atom, coord
 
     def read_atoms_and_coordinates_from_array(self, array):
@@ -129,7 +139,7 @@ class Geometry:
         for i in range(len(array)):
             array[i] = array[i].strip()
         self.set_title(array[0])
-        charge, multiplicity = array[2].split()
+        charge, multiplicity = re.split(r'[\s,]+', array[2])
         self.set_multiplicity(int(multiplicity))
         self.set_charge(int(charge))
         self.read_atoms_and_coordinates_from_array(array[3:])
@@ -186,14 +196,16 @@ class Geometry:
         for atom, coord in zip(self.geometry['atoms'], self.geometry['coordinates']):
             print(f"  {atom}: {coord[0]:.6f}, {coord[1]:.6f}, {coord[2]:.6f}")
 
-    def pack_current_settings_to_dict(self):
+    def pack_geometry_settings_to_dict(self):
+        print('calling packing in geometry')
         current_settings = {
             "title": self.geometry['title'],
             "multiplicity": self.geometry['multiplicity'],
             "charge": self.geometry['charge'],
             "atoms": self.geometry['atoms'],
-            "coordinates": self.geometry['coordinates']
+            "coordinates": self.geometry['coordinates'].tolist() if self.geometry['coordinates'] is not None else None
         }
+        print(current_settings)
         return current_settings
 
     def save_current_settings_to_json(self, filename):
@@ -204,7 +216,9 @@ class Geometry:
                 data_in_file = json.load(f)
         else:
             data_in_file = {}
-        data_in_file['geometry'] = self.pack_current_settings_to_dict()
+        data_in_file['geometry'] = self.pack_geometry_settings_to_dict()
+        print("data_in_file:")
+        print(data_in_file)
         with open(filename, 'w') as f:
             json.dump(data_in_file, f, indent=4)
 
@@ -220,3 +234,6 @@ class Geometry:
         else:
             for key in input_geometry:
                 self.geometry[key] = data.get(key, None)
+            if self.geometry['coordinates'] is not None:
+                #to ensure that the coordinate entry is a numpy array
+                self.set_coordinates(self.geometry['coordinates'])

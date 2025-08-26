@@ -7,7 +7,7 @@ from .system_control import SystemControl as SysCon
 from .calculation_methods import CalculationMethods as CalMeth
 from .gaussian_geometry import Geometry as Geom
 
-class GaussianInput(SysCon, CalMeth, Geom):
+class GaussianInput(CalMeth, SysCon, Geom):
     def __init__(self):
         SysCon.__init__(self)
         CalMeth.__init__(self)

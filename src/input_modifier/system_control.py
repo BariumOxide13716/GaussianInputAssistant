@@ -67,7 +67,8 @@ class SystemControl():
             assert key in self.system_control, f"Missing required system control: {key}"
             assert self.system_control[key] is not None, f"System control {key} is not set."
 
-    def pack_current_settings_to_dict(self):
+    def pack_system_settings_to_dict(self):
+        print('calling packing in system_control')
         return self.system_control
 
     def save_current_settings_to_json(self, filename):
@@ -78,7 +79,7 @@ class SystemControl():
                 data_in_file = json.load(f)
         else:
             data_in_file = {}
-        data_in_file['system_control'] = self.pack_current_settings_to_dict()
+        data_in_file['system_control'] = self.pack_system_settings_to_dict()
         with open(filename, 'w') as file:
             json.dump(data_in_file, file, indent=4)
 
