@@ -15,9 +15,7 @@ Already a pro? Just edit this README.md and make it your own. Want to make it ea
 
 ```
 cd existing_repo
-git remote add origin https://gitlab.com/qq270814845/gaussian_input_modifier.git
-git branch -M main
-git push -uf origin main
+git remote add origin https://github.com/BariumOxide13716/GaussianInputAssistant/settings 
 ```
 
 ## Integrate with your tools
